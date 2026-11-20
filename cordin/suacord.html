@@ -115,17 +115,19 @@ form .btn{width:100%;margin-top:20px}
 
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>window.supabase||document.write('<script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"><\/script>')</script>
 <script>
 /* ===== CONFIGURE AQUI (Supabase > Project Settings > API). A anon key é pública por design. ===== */
 const SUPABASE_URL=CORD.url,SUPABASE_ANON_KEY=CORD.key;
 
 const $=id=>document.getElementById(id);
 const ok=SUPABASE_URL.startsWith('https://');
-const sb=ok?supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY):null;
+let sb=null;try{if(ok)sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY)}catch(e){console.error(e)}
 function say(id,t,c){const e=$(id);e.textContent=t;e.className='msg '+(c||'')}
 const tr=e=>{const m=e.message||String(e);return({'Invalid login credentials':'E-mail ou senha incorretos.','User already registered':'Este e-mail já tem conta.','Email not confirmed':'Confirme o seu e-mail antes de entrar.','Signups not allowed for this instance':'Cadastros desativados no Supabase (Authentication > Sign In / Providers > Email).'}[m])||(/rate limit/i.test(m)?'Limite de e-mails do Supabase atingido. Aguarde cerca de 1 hora ou configure um SMTP próprio.':m)};
 addEventListener('unhandledrejection',e=>say('amsg',(e.reason&&e.reason.message)||'Erro de conexão. Tente de novo.','err'));
 if(!ok)say('amsg','Falta configurar o Supabase (veja o arquivo SUPABASE-SETUP.md).','err');
+else if(!sb)say('amsg','Não foi possível carregar o Supabase (rede ou bloqueador). Recarregue com Ctrl+F5.','err');
 
 /* abas */
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
@@ -147,16 +149,16 @@ function render(user){
 if(sb){sb.auth.getSession().then(({data})=>render(data.session?.user));sb.auth.onAuthStateChange((_,s)=>render(s?.user))}
 
 /* entrar */
-$('fin').onsubmit=async e=>{e.preventDefault();if(!sb)return;say('amsg','Entrando...');
+$('fin').onsubmit=async e=>{e.preventDefault();if(!sb)return say('amsg','Sem conexão com o Supabase. Recarregue com Ctrl+F5.','err');say('amsg','Entrando...');
   const{error}=await sb.auth.signInWithPassword({email:$('li-e').value.trim(),password:$('li-s').value});
   say('amsg',error?tr(error):'',error?'err':'')};
-$('forgot').onclick=async()=>{if(!sb)return;const m=$('li-e').value.trim();
+$('forgot').onclick=async()=>{if(!sb)return say('amsg','Sem conexão com o Supabase. Recarregue com Ctrl+F5.','err');const m=$('li-e').value.trim();
   if(!m)return say('amsg','Digite o seu e-mail acima primeiro.','err');
   const{error}=await sb.auth.resetPasswordForEmail(m,{redirectTo:location.origin+'/suacord'});
   say('amsg',error?tr(error):'Enviamos um link de redefinição para o seu e-mail.',error?'err':'ok')};
 
 /* criar conta */
-$('fup').onsubmit=async e=>{e.preventDefault();if(!sb)return;
+$('fup').onsubmit=async e=>{e.preventDefault();if(!sb)return say('amsg','Sem conexão com o Supabase. Recarregue com Ctrl+F5.','err');
   const nome=$('su-n').value.trim(),tel=$('su-t').value.trim(),s=$('su-s').value;
   if(nome.split(/\s+/).length<2)return say('amsg','Digite o nome completo.','err');
   if(tel.replace(/\D/g,'').length<10)return say('amsg','Digite um telefone válido com DDD.','err');
