@@ -113,7 +113,7 @@ form .btn{width:100%;margin-top:20px}
   </section>
 </main>
 
-<script src="/config.js"></script>
+<script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
 /* ===== CONFIGURE AQUI (Supabase > Project Settings > API). A anon key é pública por design. ===== */
@@ -123,7 +123,8 @@ const $=id=>document.getElementById(id);
 const ok=SUPABASE_URL.startsWith('https://');
 const sb=ok?supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY):null;
 function say(id,t,c){const e=$(id);e.textContent=t;e.className='msg '+(c||'')}
-const tr=e=>({'Invalid login credentials':'E-mail ou senha incorretos.','User already registered':'Este e-mail já tem conta.','Email not confirmed':'Confirme o seu e-mail antes de entrar.'}[e.message]||e.message);
+const tr=e=>{const m=e.message||String(e);return({'Invalid login credentials':'E-mail ou senha incorretos.','User already registered':'Este e-mail já tem conta.','Email not confirmed':'Confirme o seu e-mail antes de entrar.','Signups not allowed for this instance':'Cadastros desativados no Supabase (Authentication > Sign In / Providers > Email).'}[m])||(/rate limit/i.test(m)?'Limite de e-mails do Supabase atingido. Aguarde cerca de 1 hora ou configure um SMTP próprio.':m)};
+addEventListener('unhandledrejection',e=>say('amsg',(e.reason&&e.reason.message)||'Erro de conexão. Tente de novo.','err'));
 if(!ok)say('amsg','Falta configurar o Supabase (veja o arquivo SUPABASE-SETUP.md).','err');
 
 /* abas */
